@@ -14,7 +14,7 @@ require 'csv'
 require 'json'
 
 USERNAME = 'skwii'
-LAST_SCRAPED_ID = '1097974222390660384_307146'
+LAST_SCRAPED_ID = '1098453698706771049_307146'
 
 # Recursively crawl all new photos, sorted by created_at desc, for a user
 def crawl(username, last_scraped_id, max_id = nil, items = [])
@@ -25,7 +25,7 @@ def crawl(username, last_scraped_id, max_id = nil, items = [])
   # Make network call and parse json
   uri = URI.parse(url)
   response = Net::HTTP.get_response(uri)
-  json = JSON.parse(response.body)
+  json = JSON.parse(response.body) rescue nil
 
   # Raise error if there is any
   raise url if json['status'] != 'ok'
@@ -62,6 +62,10 @@ def save(item)
 
   # Organize photos into year and month folders
   `mkdir -p #{ folder_name }`
+
+  # Check if 1080 resolution is available (not exposed in their api)
+  url_1080 = url.gsub('s640x640', 's1080xs1080')
+  url = url_1080 if `curl -s -I #{ url_1080 }` =~ /200 OK/
 
   # Download photo
   `curl -s -o #{ file_path } #{ url }`
